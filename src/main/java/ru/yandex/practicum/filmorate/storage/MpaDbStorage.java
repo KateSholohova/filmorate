@@ -6,9 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.mappers.MpaRowMapper;
-
 
 import java.util.List;
 
@@ -25,7 +23,7 @@ public class MpaDbStorage implements MpaStorage {
     }
 
     public Mpa findById(long id) {
-        if (jdbc.query("SELECT * FROM mpa WHERE ID = ?", mapper, id).isEmpty()){
+        if (jdbc.query("SELECT * FROM mpa WHERE ID = ?", mapper, id).isEmpty()) {
             return null;
         } else {
             return jdbc.query("SELECT * FROM mpa WHERE ID = ?", mapper, id).get(0);
