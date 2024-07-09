@@ -3,6 +3,10 @@ package ru.yandex.practicum.filmorate.storage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
@@ -17,6 +21,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbc;
+    private final NamedParameterJdbcOperations jdbcOperations;
     private final FilmRowMapper mapper;
 
     public List<Film> findAll() {
@@ -30,13 +35,19 @@ public class FilmDbStorage implements FilmStorage {
             log.error("Некорректная дата выхода: {}", film.getReleaseDate());
             throw new ValidationException("Дата релиза — не раньше 28 декабря 1895 года");
         }
-        jdbc.update(
-                "INSERT INTO films VALUES (?, ?, ?, ?, ?)",
-                film.getId(), film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(), film.getMpa().getId());
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        MapSqlParameterSource map = new MapSqlParameterSource();
+        map.addValue("name", film.getName());
+        map.addValue("description", film.getDescription());
+        map.addValue("releaseDate", film.getReleaseDate());
+        map.addValue("duration", film.getDuration());
+        map.addValue("mpa_id", film.getMpa().getId());
+        jdbcOperations.update(
+                "INSERT INTO films(name, description, releaseDate, duration, mpa_id) VALUES (:name, :description, :releaseDate, :duration, :mpa_id)", map, keyHolder);
 
         log.info("Фильм {} сохранен", film);
 
-        return jdbc.queryForObject("SELECT * FROM users WHERE ID = ?", mapper, film.getId());
+        return jdbc.queryForObject("SELECT * FROM users WHERE ID = ?", mapper, keyHolder.getKey().longValue());
     }
 
     public Film update(Film newFilm) {

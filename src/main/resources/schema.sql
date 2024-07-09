@@ -1,13 +1,9 @@
+
 CREATE TABLE IF NOT EXISTS users
 (
     id
     INTEGER
-    GENERATED
-    BY
-    DEFAULT AS
-    IDENTITY
-    PRIMARY
-    KEY,
+    AUTO_INCREMENT,
     email
     varchar
     NOT
@@ -21,36 +17,28 @@ CREATE TABLE IF NOT EXISTS users
     birthday
     date
     NOT
-    NULL
+    NULL,
+    PRIMARY KEY (id)
 
-);
+    );
 
 CREATE TABLE IF NOT EXISTS mpa
 (
     id
     INTEGER
-    GENERATED
-    BY
-    DEFAULT AS
-    IDENTITY
-    PRIMARY
-    KEY,
+    AUTO_INCREMENT,
     name
     varchar
     NOT
-    NULL
-);
+    NULL,
+    PRIMARY KEY (id)
+    );
 
 CREATE TABLE IF NOT EXISTS films
 (
     id
     INTEGER
-    GENERATED
-    BY
-    DEFAULT AS
-    IDENTITY
-    PRIMARY
-    KEY,
+    AUTO_INCREMENT,
     name
     varchar
     NOT
@@ -66,11 +54,13 @@ CREATE TABLE IF NOT EXISTS films
 (
     id
 ),
+    PRIMARY KEY (id),
     CONSTRAINT duration_positive CHECK
 (
     duration >
     0
 )
+
     );
 
 CREATE TABLE IF NOT EXISTS films_likes
@@ -109,17 +99,13 @@ CREATE TABLE IF NOT EXISTS genre
 (
     id
     INTEGER
-    GENERATED
-    BY
-    DEFAULT AS
-    IDENTITY
-    PRIMARY
-    KEY,
+    AUTO_INCREMENT,
     name
     varchar
     NOT
-    NULL
-);
+    NULL,
+    PRIMARY KEY (id)
+    );
 
 CREATE TABLE IF NOT EXISTS films_genre
 (

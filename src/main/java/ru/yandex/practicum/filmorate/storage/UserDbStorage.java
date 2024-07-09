@@ -4,6 +4,10 @@ package ru.yandex.practicum.filmorate.storage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
@@ -17,6 +21,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserDbStorage implements UserStorage {
     private final JdbcTemplate jdbc;
+    private final NamedParameterJdbcOperations jdbcOperations;
     private final UserRowMapper mapper;
 
     public List<User> findAll() {
@@ -30,13 +35,21 @@ public class UserDbStorage implements UserStorage {
             log.info("Имя не указано. Используем логин в качестве имени: {}", user.getLogin());
             user.setName(user.getLogin());
         }
-        jdbc.update(
-                "INSERT INTO users VALUES (?, ?, ?, ?, ?)",
-                user.getId(), user.getEmail(), user.getLogin(), user.getName(), user.getBirthday());
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        MapSqlParameterSource map = new MapSqlParameterSource();
+        map.addValue("email", user.getEmail());
+        map.addValue("login", user.getLogin());
+        map.addValue("name", user.getName());
+        map.addValue("birthday", user.getBirthday());
+
+        jdbcOperations.update(
+                "INSERT INTO users(email, login, name, birthday) VALUES (:email, :login, :name, :birthday)",
+                map, keyHolder);
 
         log.info("Пользователь {} сохранен", user);
 
-        return jdbc.queryForObject("SELECT * FROM users WHERE ID = ?", mapper, user.getId());
+
+        return jdbc.queryForObject("SELECT * FROM users WHERE ID = ?", mapper, keyHolder.getKey().longValue());
     }
 
     public User update(User newUser) {
