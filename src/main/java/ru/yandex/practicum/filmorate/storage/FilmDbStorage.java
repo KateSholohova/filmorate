@@ -47,7 +47,7 @@ public class FilmDbStorage implements FilmStorage {
 
         log.info("Фильм {} сохранен", film);
 
-        return jdbc.queryForObject("SELECT * FROM films WHERE ID = ?", mapper, keyHolder.getKey().longValue());
+        return film;
     }
 
     public Film update(Film newFilm) {
@@ -62,7 +62,7 @@ public class FilmDbStorage implements FilmStorage {
                 throw new ValidationException("Дата релиза — не раньше 28 декабря 1895 года");
             }
 
-            String sql = "UPDATE FILMS SET NAME = ?, releaseDate = :releaseDate, DESCRIPTION = ?, MPA_ID = ?, DURATION = ? WHERE ID = ?";
+            String sql = "UPDATE FILMS SET NAME = ?, releaseDate = ?, DESCRIPTION = ?, MPA_ID = ?, DURATION = ? WHERE ID = ?";
             jdbc.update(sql, newFilm.getName(), newFilm.getReleaseDate(), newFilm.getDescription(), newFilm.getMpa().getId(), newFilm.getId());
             log.info("Фильм обновлен: {}", newFilm);
             return jdbc.queryForObject("SELECT * FROM films WHERE ID = ?", mapper, newFilm.getId());
