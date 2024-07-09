@@ -12,7 +12,7 @@ import java.util.Collection;
 public class MpaService {
     private final MpaDbStorage mpaDbStorage;
 
-    public Collection<Mpa> findAll(){
+    public Collection<Mpa> findAll() {
         return mpaDbStorage.findAll();
     }
 
