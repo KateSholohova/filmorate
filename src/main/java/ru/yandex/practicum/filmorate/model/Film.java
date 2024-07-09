@@ -6,13 +6,12 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.time.LocalDate;
-import java.util.Set;
 
 @Data
 public class Film {
     Long id;
     LocalDate releaseDate;
-    Set<Long> likes;
+    private Mpa mpa;
     @NotBlank
     String name;
     @Size(max = 200)
