@@ -131,7 +131,7 @@ public class UserService {
         if (userRepository.findById(userId) == null) {
             throw new NotFoundException("Нет пользователя с id: " + userId);
         }
-        String sql = "SELECT U.* FROM friendship_request AS F JOIN USERS AS U ON F.from_user_id = U.id WHERE F.to_user_id = ? ORDER BY U.id";
+        String sql = "SELECT U.* FROM friendship_request AS F JOIN USERS AS U ON F.from_user_id = U.id WHERE F.to_user_id = ? AND F.status = true ORDER BY U.id";
         List<User> usersList = jdbc.query(sql, mapper, userId);
 
 //        jdbc.("SELECT to_user_id FROM friendship_request WHERE from_user_id = ?", id);

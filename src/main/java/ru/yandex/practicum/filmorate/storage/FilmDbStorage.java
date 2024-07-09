@@ -47,7 +47,7 @@ public class FilmDbStorage implements FilmStorage {
 
         log.info("Фильм {} сохранен", film);
 
-        return jdbc.queryForObject("SELECT * FROM users WHERE ID = ?", mapper, keyHolder.getKey().longValue());
+        return jdbc.queryForObject("SELECT * FROM films WHERE ID = ?", mapper, keyHolder.getKey().longValue());
     }
 
     public Film update(Film newFilm) {
