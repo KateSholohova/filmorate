@@ -38,7 +38,7 @@ public class FilmDbStorage implements FilmStorage {
             log.error("Некорректная дата выхода: {}", film.getReleaseDate());
             throw new ValidationException("Дата релиза — не раньше 28 декабря 1895 года");
         }
-        if(mpaDbStorage.findById(film.getMpa().getId()) == null){
+        if (mpaDbStorage.findById(film.getMpa().getId()) == null) {
             throw new NotFoundException("Mpa с id = " + film.getMpa().getId() + " не найден");
         }
         for (Genre genre : film.getGenres()) {
