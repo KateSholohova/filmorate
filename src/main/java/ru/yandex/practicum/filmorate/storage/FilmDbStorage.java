@@ -38,12 +38,12 @@ public class FilmDbStorage implements FilmStorage {
             log.error("Некорректная дата выхода: {}", film.getReleaseDate());
             throw new ValidationException("Дата релиза — не раньше 28 декабря 1895 года");
         }
-        if (mpaDbStorage.findById(film.getMpa().getId()) == null) {
-            throw new NotFoundException("Mpa с id = " + film.getMpa().getId() + " не найден");
+        if ((film.getMpa().getId()) > 5) {
+            throw new ValidationException("Mpa неверный");
         }
         for (Genre genre : film.getGenres()) {
-            if (genreDbStorage.findById(genre.getId()) == null) {
-                throw new NotFoundException("Жанр с id = " + film.getMpa().getId() + " не найден");
+            if ((genre.getId()) > 6) {
+                throw new ValidationException("Жанр неверный");
             }
         }
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -76,9 +76,10 @@ public class FilmDbStorage implements FilmStorage {
                 log.error("Некорректная дата выхода: {}", newFilm.getReleaseDate());
                 throw new ValidationException("Дата релиза — не раньше 28 декабря 1895 года");
             }
-
+            System.out.println(newFilm.getId());
             String sql = "UPDATE FILMS SET NAME = ?, releaseDate = ?, DESCRIPTION = ?, MPA_ID = ?, DURATION = ? WHERE ID = ?";
-            jdbc.update(sql, newFilm.getName(), newFilm.getReleaseDate(), newFilm.getDescription(), newFilm.getMpa().getId(), newFilm.getId());
+
+            jdbc.update(sql, newFilm.getName(), newFilm.getReleaseDate(), newFilm.getDescription(), newFilm.getMpa().getId(), newFilm.getDuration(), newFilm.getId());
             log.info("Фильм обновлен: {}", newFilm);
             return jdbc.queryForObject("SELECT * FROM films WHERE ID = ?", mapper, newFilm.getId());
         }
