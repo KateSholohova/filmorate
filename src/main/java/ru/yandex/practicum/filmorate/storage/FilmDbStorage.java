@@ -48,10 +48,8 @@ public class FilmDbStorage implements FilmStorage {
                 throw new ValidationException("Жанр неверный");
             }
         }
-        for (Genre genre : film.getGenres()) {
-            String sql = "INSERT INTO films_genre(film_id, genre_id) VALUES(?, ?)";
-            jdbc.update(sql, film.getId(), genre.getId());
-        }
+        System.out.println(film.getGenres());
+
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
         MapSqlParameterSource map = new MapSqlParameterSource();
@@ -60,15 +58,16 @@ public class FilmDbStorage implements FilmStorage {
         map.addValue("releaseDate", film.getReleaseDate());
         map.addValue("duration", film.getDuration());
         map.addValue("mpa_id", film.getMpa().getId());
-        //map.addValue("genre", film.getGenres());
         jdbcOperations.update(
                 "INSERT INTO films(name, description, releaseDate, duration, mpa_id) VALUES (:name, :description, :releaseDate, :duration, :mpa_id)", map, keyHolder);
 
         log.info("Фильм {} сохранен", film);
 
         film.setId(keyHolder.getKey().longValue());
-
-
+        for (Genre genre : film.getGenres()) {
+            String sql = "INSERT INTO films_genre(film_id, genre_id) VALUES(?, ?)";
+            jdbc.update(sql, film.getId(), genre.getId());
+        }
         return film;
     }
 
@@ -106,7 +105,7 @@ public class FilmDbStorage implements FilmStorage {
         } else {
             Film film = jdbc.query("SELECT * FROM films WHERE ID = ?", mapper, id).get(0);
             film.setMpa(mpaDbStorage.findById(film.getMpa().getId()));
-            String sql = "SELECT G.* FROM films_genre AS F JOIN genre AS G ON F.genre_id = G.id WHERE F.film_id = ? ORDER BY G.id";
+            String sql = "SELECT G.* FROM films_genre AS F JOIN genre AS G ON F.genre_id = G.id WHERE F.film_id = ?";
             List<Genre> genreList = jdbc.query(sql, genreRowMapper, id);
             film.setGenres(genreList);
             return film;
