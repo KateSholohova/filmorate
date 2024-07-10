@@ -6,12 +6,14 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 public class Film {
     Long id;
     LocalDate releaseDate;
-    private Mpa mpa;
+    Mpa mpa;
+    List<Genre> genres;
     @NotBlank
     String name;
     @Size(max = 200)
