@@ -20,30 +20,6 @@ public class UserService {
     private final JdbcTemplate jdbc;
     private final UserRowMapper mapper;
 
-
-//    public User addFriend(long id, long friendId) {
-//
-//        if (inMemoryUserStorage.findById(id) == null) {
-//            throw new NotFoundException("Нет пользователя с id: " + id);
-//        }
-//        if (inMemoryUserStorage.findById(friendId) == null) {
-//            throw new NotFoundException("Нет пользователя с id: " + friendId);
-//        }
-//        User user = inMemoryUserStorage.findById(id);
-//        if (user.getFriends() == null) {
-//            user.setFriends(new HashSet<>());
-//        }
-//        user.getFriends().add(friendId);
-//        User friend = inMemoryUserStorage.findById(friendId);
-//        if (friend.getFriends() == null) {
-//            friend.setFriends(new HashSet<>());
-//        }
-//        friend.getFriends().add(id);
-//        inMemoryUserStorage.update(user);
-//        inMemoryUserStorage.update(friend);
-//        return friend;
-//    }
-
     public User addFriend(long id, long friendId) {
 
         if (userRepository.findById(id) == null) {
@@ -60,29 +36,6 @@ public class UserService {
 
         return userRepository.findById(id);
     }
-
-
-//    public Set<Long> deleteUser(long id, long friendId) {
-//        if (inMemoryUserStorage.findById(id) == null) {
-//            throw new NotFoundException("Нет пользователя с id: " + id);
-//        }
-//        if (inMemoryUserStorage.findById(friendId) == null) {
-//            throw new NotFoundException("Нет пользователя с id: " + friendId);
-//        }
-//        User user = inMemoryUserStorage.findById(id);
-//        if (user.getFriends() == null) {
-//            return new HashSet<>();
-//        }
-//        if (!user.getFriends().contains(friendId)) {
-//            throw new NotFoundException("Нет пользователя с id у вас в друзьях: " + id);
-//        }
-//        user.getFriends().remove(friendId);
-//        User friend = inMemoryUserStorage.findById(friendId);
-//        friend.getFriends().remove(id);
-//        inMemoryUserStorage.update(user);
-//        inMemoryUserStorage.update(friend);
-//        return user.getFriends();
-//    }
 
     public User deleteUser(long id, long friendId) {
         if (userRepository.findById(id) == null) {
@@ -134,18 +87,6 @@ public class UserService {
         String sql = "SELECT U.* FROM friendship_request AS F JOIN USERS AS U ON F.from_user_id = U.id WHERE F.to_user_id = ? ORDER BY U.id";
         List<User> usersList = jdbc.query(sql, mapper, userId);
 
-//        jdbc.("SELECT to_user_id FROM friendship_request WHERE from_user_id = ?", id);
-//
-//        String query = "SELECT * FROM users";
-//        return jdbc.query(query, mapper);
-//        if (user.getFriends() == null) {
-//            return allFriends;
-//        }
-//        for (Long firstId : user.getFriends()) {
-//            if (inMemoryUserStorage.findById(firstId) != null) {
-//                allFriends.add(inMemoryUserStorage.findById(firstId));
-//            }
-//        }
         return usersList;
     }
 

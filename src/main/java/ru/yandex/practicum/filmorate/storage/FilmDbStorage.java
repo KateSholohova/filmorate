@@ -13,6 +13,7 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.mappers.FilmRowMapper;
+import ru.yandex.practicum.filmorate.storage.mappers.GenreRowMapper;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -26,6 +27,7 @@ public class FilmDbStorage implements FilmStorage {
     private final FilmRowMapper mapper;
     private final MpaDbStorage mpaDbStorage;
     private final GenreDbStorage genreDbStorage;
+    private final GenreRowMapper genreRowMapper;
 
     public List<Film> findAll() {
         String query = "SELECT * FROM films";
@@ -46,6 +48,11 @@ public class FilmDbStorage implements FilmStorage {
                 throw new ValidationException("Жанр неверный");
             }
         }
+        for (Genre genre : film.getGenres()) {
+            String sql = "INSERT INTO films_genre(film_id, genre_id) VALUES(?, ?)";
+            jdbc.update(sql, film.getId(), genre.getId());
+        }
+
         KeyHolder keyHolder = new GeneratedKeyHolder();
         MapSqlParameterSource map = new MapSqlParameterSource();
         map.addValue("name", film.getName());
@@ -97,7 +104,12 @@ public class FilmDbStorage implements FilmStorage {
         if (jdbc.query("SELECT * FROM films WHERE ID = ?", mapper, id).isEmpty()) {
             return null;
         } else {
-            return jdbc.query("SELECT * FROM films WHERE ID = ?", mapper, id).get(0);
+            Film film = jdbc.query("SELECT * FROM films WHERE ID = ?", mapper, id).get(0);
+            film.setMpa(mpaDbStorage.findById(film.getMpa().getId()));
+            String sql = "SELECT G.* FROM films_genre AS F JOIN genre AS G ON F.genre_id = G.id WHERE F.film_id = ? ORDER BY G.id";
+            List<Genre> genreList = jdbc.query(sql, genreRowMapper, id);
+            film.setGenres(genreList);
+            return film;
         }
     }
 }
