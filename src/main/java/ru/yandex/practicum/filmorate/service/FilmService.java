@@ -58,9 +58,12 @@ public class FilmService {
     public Film create(Film film) {
         return filmDbStorage.create(film);
     }
+    public Film getById(long id){
+        return filmDbStorage.findById(id);
+    }
 
     public List<Film> getPopular(int count) {
-        String sql = "SELECT film_id FROM films_likes + GROUP BY film_id ORDER BY COUNT(user_id) DESC LIMIT ?";
+        String sql = "SELECT film_id FROM films_likes GROUP BY film_id ORDER BY COUNT(user_id) DESC LIMIT ?";
         List<Integer> idPopularFilms = jdbc.queryForList(sql, Integer.class, count);
         List<Film> popularFilms = new ArrayList<>();
         for (Integer id : idPopularFilms) {
