@@ -139,12 +139,12 @@ public class FilmDbStorage implements FilmStorage {
 
     public Film findById(long id) {
 
-        final String sqlQuery = "select * FROM FILMS AS f JOIN MPA AS  m ON f.MPA_ID = m.ID WHERE f.ID = ?";
-        final List<Film> films = jdbc.query(sqlQuery, mapper, id);
+        final List<Film> films = jdbc.query("SELECT * FROM films WHERE ID = ?", mapper, id);
         if (films.size() != 1) {
             throw new NotFoundException("film id=" + id);
         }
         Film film = films.get(0);
+        film.setMpa(mpaDbStorage.findById(film.getMpa().getId()));
         String sql = "SELECT G.* FROM films_genre AS F JOIN genre AS G ON F.genre_id = G.id WHERE F.film_id = ? GROUP BY G.id";
         List<Genre> genreList = jdbc.query(sql, genreRowMapper, id);
         film.setGenres(genreList);
