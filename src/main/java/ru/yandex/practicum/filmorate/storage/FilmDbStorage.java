@@ -139,7 +139,7 @@ public class FilmDbStorage implements FilmStorage {
 
     public Film findById(long id) {
 
-        final String sqlQuery = "select * FROM FILMS AS f JOIN MPA AS  m ON f.MPA_ID = m.ID WHERE f.FILM_ID = ?";
+        final String sqlQuery = "select * FROM FILMS AS f JOIN MPA AS  m ON f.MPA_ID = m.ID WHERE f.ID = ?";
         final List<Film> films = jdbc.query(sqlQuery, mapper, id);
         if (films.size() != 1) {
             throw new NotFoundException("film id=" + id);
