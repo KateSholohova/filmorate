@@ -43,12 +43,13 @@ public class FilmDbStorage implements FilmStorage {
         if ((film.getMpa().getId()) > 5) {
             throw new ValidationException("Mpa неверный");
         }
-        for (Genre genre : film.getGenres()) {
-            if ((genre.getId()) > 6) {
-                throw new ValidationException("Жанр неверный");
+        if (film.getGenres() != null) {
+            for (Genre genre : film.getGenres()) {
+                if ((genre.getId()) > 6) {
+                    throw new ValidationException("Жанр неверный");
+                }
             }
         }
-        System.out.println(film.getGenres());
 
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -64,10 +65,13 @@ public class FilmDbStorage implements FilmStorage {
         log.info("Фильм {} сохранен", film);
 
         film.setId(keyHolder.getKey().longValue());
-        for (Genre genre : film.getGenres()) {
-            String sql = "INSERT INTO films_genre(film_id, genre_id) VALUES(?, ?)";
-            jdbc.update(sql, film.getId(), genre.getId());
+        if (film.getGenres() != null) {
+            for (Genre genre : film.getGenres()) {
+                String sql = "INSERT INTO films_genre(film_id, genre_id) VALUES(?, ?)";
+                jdbc.update(sql, film.getId(), genre.getId());
+            }
         }
+
         return film;
     }
 
@@ -105,7 +109,7 @@ public class FilmDbStorage implements FilmStorage {
         } else {
             Film film = jdbc.query("SELECT * FROM films WHERE ID = ?", mapper, id).get(0);
             film.setMpa(mpaDbStorage.findById(film.getMpa().getId()));
-            String sql = "SELECT G.* FROM films_genre AS F JOIN genre AS G ON F.genre_id = G.id WHERE F.film_id = ?";
+            String sql = "SELECT G.* FROM films_genre AS F JOIN genre AS G ON F.genre_id = G.id WHERE F.film_id = ? GROUP BY G.id";
             List<Genre> genreList = jdbc.query(sql, genreRowMapper, id);
             film.setGenres(genreList);
             return film;
