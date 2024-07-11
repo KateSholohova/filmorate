@@ -11,15 +11,15 @@ import java.util.List;
 
 @Data
 public class Film {
-    Long id;
-    LocalDate releaseDate;
-    Mpa mpa;
+    private Long id;
+    private LocalDate releaseDate;
+    private Mpa mpa;
     @Nullable
-    List<Genre> genres;
+    private List<Genre> genres;
     @NotBlank
-    String name;
+    private String name;
     @Size(max = 200)
-    String description;
+    private String description;
     @Positive
-    Integer duration;
+    private Integer duration;
 }

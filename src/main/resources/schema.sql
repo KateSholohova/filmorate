@@ -1,9 +1,7 @@
-
 CREATE TABLE IF NOT EXISTS users
 (
     id
-    INTEGER
-    AUTO_INCREMENT,
+    INTEGER AUTO_INCREMENT,
     email
     varchar
     NOT
@@ -18,27 +16,33 @@ CREATE TABLE IF NOT EXISTS users
     date
     NOT
     NULL,
-    PRIMARY KEY (id)
+    PRIMARY
+    KEY
+(
+    id
+)
 
     );
 
 CREATE TABLE IF NOT EXISTS mpa
 (
     id
-    INTEGER
-    AUTO_INCREMENT,
+    INTEGER AUTO_INCREMENT,
     name
     varchar
     NOT
     NULL,
-    PRIMARY KEY (id)
+    PRIMARY
+    KEY
+(
+    id
+)
     );
 
 CREATE TABLE IF NOT EXISTS films
 (
     id
-    INTEGER
-    AUTO_INCREMENT,
+    INTEGER AUTO_INCREMENT,
     name
     varchar
     NOT
@@ -54,7 +58,10 @@ CREATE TABLE IF NOT EXISTS films
 (
     id
 ),
-    PRIMARY KEY (id),
+    PRIMARY KEY
+(
+    id
+),
     CONSTRAINT duration_positive CHECK
 (
     duration >
@@ -98,13 +105,16 @@ CREATE TABLE IF NOT EXISTS friendship_request
 CREATE TABLE IF NOT EXISTS genre
 (
     id
-    INTEGER
-    AUTO_INCREMENT,
+    INTEGER AUTO_INCREMENT,
     name
     varchar
     NOT
     NULL,
-    PRIMARY KEY (id)
+    PRIMARY
+    KEY
+(
+    id
+)
     );
 
 CREATE TABLE IF NOT EXISTS films_genre

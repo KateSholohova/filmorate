@@ -27,8 +27,8 @@ public class GenreDbStorage implements GenreStorage {
     public Genre findById(long id) {
         if (jdbc.query("SELECT * FROM genre WHERE ID = ?", mapper, id).isEmpty()) {
             throw new NotFoundException("Жанр с id = " + id + " не найден");
-        } else {
-            return jdbc.query("SELECT * FROM genre WHERE ID = ?", mapper, id).get(0);
         }
+        return jdbc.query("SELECT * FROM genre WHERE ID = ?", mapper, id).get(0);
+
     }
 }

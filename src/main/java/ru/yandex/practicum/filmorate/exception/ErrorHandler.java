@@ -25,6 +25,6 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleException(final Exception e) {
 
-        return new ErrorResponse("Исключения", e.getMessage());
+        return new ErrorResponse("Внутренняя ошибка", e.getMessage());
     }
 }
