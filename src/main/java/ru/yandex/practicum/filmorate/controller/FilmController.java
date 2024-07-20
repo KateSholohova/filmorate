@@ -33,6 +33,12 @@ public class FilmController {
         return film;
     }
 
+    @DeleteMapping("/{id}")
+    public void deleteFilm(@PathVariable("id") int id) {
+        log.info("Удален фильм id {}", id);
+        filmService.deleteFilmById(id);
+    }
+
     @GetMapping
     public List<Film> findAllFilms() {
         log.info("GET / films");
@@ -61,5 +67,16 @@ public class FilmController {
     public List<Film> findPopular(@RequestParam(defaultValue = "10") @Positive int count) {
         log.info("GET / popular");
         return filmService.findPopular(count);
+    }
+
+    @GetMapping("/director/{id}")
+    public List<Film> findFilmsByDirectorID(@PathVariable("id") Integer id, @RequestParam("sortBy") String sortedBy) {
+        log.info("GET / director / {} / sortBy {}", id, sortedBy);
+        return filmService.findFilmsByDirectorID(id, sortedBy);
+    }
+
+    @GetMapping("/search")
+    public List<Film> searchFilm(@RequestParam String query, @RequestParam List<String> by) {
+        return filmService.searchFilm(query, by);
     }
 }

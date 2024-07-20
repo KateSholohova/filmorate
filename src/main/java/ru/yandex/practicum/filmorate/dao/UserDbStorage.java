@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.dao;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+@Slf4j
 @RequiredArgsConstructor
 @Repository
 public class UserDbStorage implements UserStorage {
@@ -55,6 +57,18 @@ public class UserDbStorage implements UserStorage {
     public Optional<User> findUserById(int id) {
         String sql = "select * from users where user_id = ?";
         return jdbcTemplate.query(sql, (rs, rowNum) -> makeUser(rs), id).stream().findFirst();
+    }
+
+    @Override
+    public void deleteUserById(int id) {
+        String sqlFriendship = "DELETE FROM FRIENDSHIP WHERE USER_ID = ?  ";
+        jdbcTemplate.update(sqlFriendship, id);
+        String sqlFriend = "DELETE FROM FRIENDSHIP WHERE FRIEND_ID = ?  ";
+        jdbcTemplate.update(sqlFriend, id);
+        String sqlLike = "DELETE FROM LIKES WHERE USER_ID = ?";
+        jdbcTemplate.update(sqlLike, id);
+        String sql = "DELETE FROM USERS WHERE USER_ID = ?";
+        jdbcTemplate.update(sql, id);
     }
 
     private User makeUser(ResultSet rs) throws SQLException {

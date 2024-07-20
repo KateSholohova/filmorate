@@ -13,4 +13,6 @@ public interface UserStorage {
     List<User> findAll();
 
     Optional<User> findUserById(int id);
+
+    void deleteUserById(int id);
 }
