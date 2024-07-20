@@ -9,7 +9,6 @@ import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 @Slf4j
 @RestController
@@ -42,7 +41,7 @@ public class UserController {
 
 
     @DeleteMapping("/{id}/friends/{friendId}")
-    public Set<Long> deleteUser(@PathVariable long id, @PathVariable long friendId) {
+    public User deleteUser(@PathVariable long id, @PathVariable long friendId) {
         return userService.deleteUser(id, friendId);
     }
 

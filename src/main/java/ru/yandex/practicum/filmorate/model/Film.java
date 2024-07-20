@@ -4,19 +4,22 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import org.springframework.lang.Nullable;
 
 import java.time.LocalDate;
-import java.util.Set;
+import java.util.List;
 
 @Data
 public class Film {
-    Long id;
-    LocalDate releaseDate;
-    Set<Long> likes;
+    private Long id;
+    private LocalDate releaseDate;
+    private Mpa mpa;
+    @Nullable
+    private List<Genre> genres;
     @NotBlank
-    String name;
+    private String name;
     @Size(max = 200)
-    String description;
+    private String description;
     @Positive
-    Integer duration;
+    private Integer duration;
 }

@@ -1,95 +1,74 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
-import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.FilmDbStorage;
+import ru.yandex.practicum.filmorate.storage.UserDbStorage;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class FilmService {
-    private final InMemoryFilmStorage inMemoryFilmStorage;
-    private final InMemoryUserStorage inMemoryUserStorage;
+    private final JdbcTemplate jdbc;
+    private final FilmDbStorage filmDbStorage;
+    private final UserDbStorage userDbStorage;
 
     public Film addLike(long id, long userId) {
-        if (inMemoryFilmStorage.findById(id) == null) {
+        if (filmDbStorage.findById(id) == null) {
             throw new NotFoundException("Нет фильма с id: " + id);
         }
-        if (inMemoryUserStorage.findById(userId) == null) {
+        if (userDbStorage.findById(userId) == null) {
             throw new NotFoundException("Нет пользователя с id: " + userId);
         }
-        Film film = inMemoryFilmStorage.findById(id);
-        if (film.getLikes() == null) {
-            film.setLikes(new HashSet<>());
-        }
-        film.getLikes().add(userId);
-        inMemoryFilmStorage.update(film);
-        return film;
+        String sql = "INSERT INTO films_likes(film_id, user_id) VALUES(?, ?)";
+        jdbc.update(sql, id, userId);
+        return filmDbStorage.findById(id);
     }
 
-    public Set<Long> deleteLikes(long id, long userId) {
-        if (inMemoryFilmStorage.findById(id) == null) {
+    public Film deleteLikes(long id, long userId) {
+        if (filmDbStorage.findById(id) == null) {
             throw new NotFoundException("Нет фильма с id: " + id);
         }
-        if (inMemoryUserStorage.findById(userId) == null) {
+        if (userDbStorage.findById(userId) == null) {
             throw new NotFoundException("Нет пользователя с id: " + userId);
         }
-        Film film = inMemoryFilmStorage.findById(id);
-        if (!film.getLikes().contains(userId)) {
-            throw new NotFoundException("Пользователь " + userId + " не ставил лайк фильму " + id);
-        }
-        film.getLikes().remove(userId);
-        inMemoryFilmStorage.update(film);
-        return film.getLikes();
+        String sql = "DELETE FROM films_likes WHERE film_id = ? AND user_id = ?";
+        jdbc.update(sql, id, userId);
+        return filmDbStorage.findById(id);
     }
 
     public Collection<Film> findAll() {
-        return inMemoryFilmStorage.findAll();
+        return filmDbStorage.findAll();
     }
 
     public void delete(long id) {
-        inMemoryFilmStorage.delete(id);
+        filmDbStorage.delete(id);
     }
 
     public Film update(Film film) {
-        return inMemoryFilmStorage.update(film);
+        return filmDbStorage.update(film);
     }
 
     public Film create(Film film) {
-        return inMemoryFilmStorage.create(film);
+        return filmDbStorage.create(film);
+    }
+
+    public Film getById(long id) {
+        return filmDbStorage.findById(id);
     }
 
     public List<Film> getPopular(int count) {
-        ArrayList<Film> films = new ArrayList<>(inMemoryFilmStorage.getFilms().values());
-        Comparator<Film> filmComparator = new Comparator<Film>() {
-            public int compare(Film film1, Film film2) {
-                System.out.println(film1.getId());
-                System.out.println(film2.getId());
-                if (film1.getLikes() == null) {
-                    film1.setLikes(new HashSet<>());
-                }
-                if (film2.getLikes() == null) {
-                    film2.setLikes(new HashSet<>());
-                }
-                return film2.getLikes().size() - film1.getLikes().size();
-            }
-        };
-        Collections.sort(films, filmComparator);
+        String sql = "SELECT film_id FROM films_likes GROUP BY film_id ORDER BY COUNT(user_id) DESC LIMIT ?";
+        List<Integer> idPopularFilms = jdbc.queryForList(sql, Integer.class, count);
         List<Film> popularFilms = new ArrayList<>();
-        if (count != 0) {
-            if (count > films.size()) {
-                popularFilms = films;
-            } else {
-                popularFilms = (films.subList(0, count));
-            }
-        } else if (count == 0 && films.size() < 10) {
-            popularFilms = (films);
-        } else if (count == 0 && films.size() >= 10) {
-            popularFilms = (films.subList(0, 10));
+        for (Integer id : idPopularFilms) {
+            popularFilms.add(filmDbStorage.findById(id));
         }
         return popularFilms;
     }

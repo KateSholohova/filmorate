@@ -10,14 +10,14 @@ import java.util.Set;
 
 @Data
 public class User {
-    String name;
-    Long id;
-    Set<Long> friends;
+    private String name;
+    private Long id;
+    private Set<Long> friends;
     @NotBlank
     @Email
-    String email;
+    private String email;
     @NotBlank
-    String login;
+    private String login;
     @Past
-    LocalDate birthday;
+    private LocalDate birthday;
 }

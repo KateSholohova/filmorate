@@ -8,7 +8,6 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.Collection;
-import java.util.Set;
 
 @Slf4j
 @RestController
@@ -25,6 +24,7 @@ public class FilmController {
 
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {
+        log.info("Создание нового фильм: {}", film);
         return filmService.create(film);
     }
 
@@ -33,13 +33,19 @@ public class FilmController {
         return filmService.update(newFilm);
     }
 
+    @GetMapping("/{id}")
+    public Film getById(@PathVariable long id) {
+        return filmService.getById(id);
+    }
+
+
     @PutMapping("/{id}/like/{userId}")
     public Film addLike(@PathVariable long id, @PathVariable long userId) {
         return filmService.addLike(id, userId);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public Set<Long> deleteLikes(@PathVariable long id, @PathVariable long userId) {
+    public Film deleteLikes(@PathVariable long id, @PathVariable long userId) {
         return filmService.deleteLikes(id, userId);
     }
 
