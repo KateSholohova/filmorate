@@ -223,7 +223,7 @@ public class FilmDbStorage implements FilmStorage {
                 "SELECT FD.FILM_ID " +
                 "FROM FILM_DIRECTORS FD " +
                 "LEFT JOIN DIRECTORS D ON D.DIRECTOR_ID = FD.DIRECTOR_ID " +
-                "WHERE UPPER(D.NAME) LIKE UPPER(:regex)" +
+                "WHERE UPPER(D.NAME) LIKE UPPER(?)" +
                 ") " +
                 "GROUP BY F.FILM_ID ";
 
