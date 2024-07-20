@@ -7,25 +7,26 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.service.MpaService;
+import ru.yandex.practicum.filmorate.service.FilmService;
 
-import java.util.Collection;
+import java.util.List;
 
 @Slf4j
-@RestController
 @RequiredArgsConstructor
+@RestController
 @RequestMapping("/mpa")
 public class MpaController {
-    private final MpaService mpaService;
+    private final FilmService filmService;
 
     @GetMapping
-    public Collection<Mpa> findAll() {
-        log.info("Получен HTTP-запрос по адресу /mpa (метод GET). Вызван метод getAllMpa()");
-        return mpaService.findAll();
+    public List<Mpa> findAllMpa() {
+        log.info("GET / mpa");
+        return filmService.findAllMpa();
     }
 
     @GetMapping("/{id}")
-    public Mpa findById(@PathVariable long id) {
-        return mpaService.findById(id);
+    public Mpa findMpaById(@PathVariable("id") int id) {
+        log.info("GET / mpa / {}", id);
+        return filmService.findMpaById(id);
     }
 }
