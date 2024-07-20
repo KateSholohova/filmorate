@@ -1,77 +1,94 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.*;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.FilmDbStorage;
-import ru.yandex.practicum.filmorate.storage.UserDbStorage;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.storage.*;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 
-@Service
 @RequiredArgsConstructor
+@Service
 public class FilmService {
-    private final JdbcTemplate jdbc;
-    private final FilmDbStorage filmDbStorage;
-    private final UserDbStorage userDbStorage;
+    private final FilmStorage filmStorage;
+    private final MpaStorage mpaStorage;
+    private final GenreStorage genreStorage;
+    private final LikeStorage likeStorage;
+    private final UserStorage userStorage;
 
-    public Film addLike(long id, long userId) {
-        if (filmDbStorage.findById(id) == null) {
-            throw new NotFoundException("Нет фильма с id: " + id);
-        }
-        if (userDbStorage.findById(userId) == null) {
-            throw new NotFoundException("Нет пользователя с id: " + userId);
-        }
-        String sql = "INSERT INTO films_likes(film_id, user_id) VALUES(?, ?)";
-        jdbc.update(sql, id, userId);
-        return filmDbStorage.findById(id);
-    }
-
-    public Film deleteLikes(long id, long userId) {
-        if (filmDbStorage.findById(id) == null) {
-            throw new NotFoundException("Нет фильма с id: " + id);
-        }
-        if (userDbStorage.findById(userId) == null) {
-            throw new NotFoundException("Нет пользователя с id: " + userId);
-        }
-        String sql = "DELETE FROM films_likes WHERE film_id = ? AND user_id = ?";
-        jdbc.update(sql, id, userId);
-        return filmDbStorage.findById(id);
-    }
-
-    public Collection<Film> findAll() {
-        return filmDbStorage.findAll();
-    }
-
-    public void delete(long id) {
-        filmDbStorage.delete(id);
-    }
-
-    public Film update(Film film) {
-        return filmDbStorage.update(film);
+    public List<Film> findAllFilms() {
+        return filmStorage.findAllFilms();
     }
 
     public Film create(Film film) {
-        return filmDbStorage.create(film);
-    }
-
-    public Film getById(long id) {
-        return filmDbStorage.findById(id);
-    }
-
-    public List<Film> getPopular(int count) {
-        String sql = "SELECT film_id FROM films_likes GROUP BY film_id ORDER BY COUNT(user_id) DESC LIMIT ?";
-        List<Integer> idPopularFilms = jdbc.queryForList(sql, Integer.class, count);
-        List<Film> popularFilms = new ArrayList<>();
-        for (Integer id : idPopularFilms) {
-            popularFilms.add(filmDbStorage.findById(id));
+        Optional<Mpa> mpa = mpaStorage.findMpaById(film.getMpa().getId());
+        if (mpa.isEmpty()) {
+            throw new ValidationException("Mpa not found");
         }
-        return popularFilms;
+
+        if (film.getGenres() != null) {
+            film.getGenres().forEach(genre -> genreStorage.findGenreById(genre.getId()).orElseThrow(() -> new ValidationException("Жанр " + genre.getId() + " не найден.")));
+        }
+
+        return filmStorage.create(film);
     }
 
+    public Film update(Film film) {
+        if (filmStorage.findFilmById(film.getId()).isEmpty()) {
+            throw new FilmNotFoundException("Фильм не найден.");
+        }
+        return filmStorage.update(film);
+    }
 
+    public Film findFilmById(int id) {
+        Film film = filmStorage.findFilmById(id).orElseThrow(() -> new FilmNotFoundException("Фильм не найден."));
+
+        List<Genre> genres = genreStorage.findAllGenresByFilmID(id);
+        LinkedHashSet<Genre> genresSet = new LinkedHashSet<>(genres);
+
+        genresSet.addAll(genres);
+
+        film.setGenres(genresSet);
+
+        return film;
+    }
+
+    public void addLike(int id, int userId) {
+        userStorage.findUserById(userId).orElseThrow(() -> new FilmNotFoundException("Пользователь не найден."));
+        filmStorage.findFilmById(id).orElseThrow(() -> new FilmNotFoundException("Фильм не найден."));
+
+        likeStorage.addLike(id, userId);
+    }
+
+    public void removeLike(int id, int userId) {
+        userStorage.findUserById(userId).orElseThrow(() -> new FilmNotFoundException("Пользователь не найден."));
+        filmStorage.findFilmById(id).orElseThrow(() -> new FilmNotFoundException("Фильм не найден."));
+
+        likeStorage.removeLike(id, userId);
+    }
+
+    public List<Film> findPopular(int count) {
+        return filmStorage.findPopular(count);
+    }
+
+    public List<Mpa> findAllMpa() {
+        return mpaStorage.findAllMpa();
+    }
+
+    public Mpa findMpaById(int id) {
+        return mpaStorage.findMpaById(id).orElseThrow(() -> new MpaNotFoundException("Рейтинг MPA не найден."));
+    }
+
+    public List<Genre> findAllGenres() {
+        return genreStorage.findAllGenres();
+    }
+
+    public Genre findGenreById(int id) {
+        return genreStorage.findGenreById(id).orElseThrow(() -> new GenreNotFoundException("Жанр не найден."));
+    }
 }
