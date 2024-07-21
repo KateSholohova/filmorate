@@ -6,7 +6,6 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
@@ -287,7 +286,7 @@ public class FilmDbStorage implements FilmStorage {
                 "GROUP BY F.FILM_ID ";
         List<Film> films = jdbcTemplate.query(sql, new Object[]{regex}, (rs, rowNum) -> makeFilm(rs));
         for (Film film : films) {
-            if(film.getGenres() == null){
+            if (film.getGenres() == null) {
                 film.setGenres(new LinkedHashSet<>());
             }
         }
@@ -303,9 +302,6 @@ public class FilmDbStorage implements FilmStorage {
         List<String> directorsN = jdbcTemplate.query(sql4, (rs, rowNum) -> rs.getString("NAME"), directorId.getFirst());
         log.info("DIRECTORS: {}", directorsN);
         log.info("directorId: {}", directorId);
-
-
-
 
 
         String findF = "SELECT FILM_ID FROM FILM_DIRECTORS";
