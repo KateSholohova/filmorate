@@ -6,8 +6,10 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -19,15 +21,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -190,19 +184,99 @@ public class FilmDbStorage implements FilmStorage {
         );
     }
 
+
+//    public List<Film> searchFilmsBy(String query, List<String> by) {
+//        log.info("Request to database for films search.");
+//
+//        List<Film> films = new ArrayList<>();
+//        SqlRowSet filmRows;
+//        String sqlQuery = "SELECT f.film_id, " +
+//                "d.director_name, " +
+//                "COUNT(fl.film_id) AS film_rate " +
+//                "FROM film AS f " +
+//                "LEFT JOIN film_directors AS fd ON f.film_id=fd.film_id " +
+//                "LEFT JOIN directors AS d ON fd.director_id=d.director_id " +
+//                "LEFT JOIN film_like AS fl ON f.film_id = fl.film_id ";
+//        String querySyntax = "%" + query + "%";
+//        if (by.contains("title") && by.contains("director")) {
+//            filmRows = jdbcTemplate.queryForRowSet(sqlQuery +
+//                    "WHERE LOWER(f.film_name) LIKE LOWER(?) " +
+//                    "OR LOWER(d.director_name) LIKE LOWER(?) " +
+//                    "GROUP BY f.film_id, fl.film_id " +
+//                    "ORDER BY film_rate DESC", querySyntax, querySyntax);
+//        } else if (by.contains("director")) {
+//            filmRows = jdbcTemplate.queryForRowSet(sqlQuery +
+//                    "WHERE LOWER(d.director_name) LIKE LOWER(?) " +
+//                    "GROUP BY f.film_id, fl.film_id " +
+//                    "ORDER BY film_rate DESC", querySyntax);
+//        } else if (by.contains("title")) {
+//            filmRows = jdbcTemplate.queryForRowSet(sqlQuery +
+//                    "WHERE LOWER(f.film_name) LIKE LOWER(?) " +
+//                    "GROUP BY f.film_id, fl.film_id " +
+//                    "ORDER BY film_rate DESC", querySyntax);
+//        } else {
+//            log.info("Invalid search request passed in 'by'");
+//            throw new IncorrectParameterException("Invalid search request passed in 'by'");
+//        }
+//
+//        while (filmRows.next()) {
+//            Long id = filmRows.getLong("film_id");
+//            films.add(getFilmById(id));
+//        }
+//
+//        return films;
+//    }
+
+
     @Override
     public List<Film> searchFilmsByDirAndName(String query) {
-        String regex = "%" + query + "%";
-        String sql = SELECT_FILMS +
-                "WHERE UPPER(f.name) LIKE UPPER(?) OR f.film_id IN (" +
-                "SELECT FD.FILM_ID " +
-                "FROM FILM_DIRECTORS FD " +
-                "LEFT JOIN DIRECTORS D ON D.DIRECTOR_ID = FD.DIRECTOR_ID " +
-                "WHERE UPPER(D.NAME) LIKE UPPER(?)" +
-                ") " +
-                "GROUP BY F.FILM_ID ";
+//        //String regex = "%" + query + "%";
+//        List<Film> films = new ArrayList<>();
+//        String querySyntax = "%" + query + "%";
+//        SqlRowSet filmRows;
+//        String sql = "SELECT f.film_id, " +
+//                "d.NAME, " +
+//                "FROM films AS f " +
+//                "LEFT JOIN FILM_DIRECTORS AS fd ON f.film_id=fd.FILM_ID " +
+//                "LEFT JOIN DIRECTORS AS d ON fd.DIRECTOR_ID=d.DIRECTOR_ID " +
+//                "WHERE LOWER(f.name) LIKE LOWER(?) " +
+//                "OR LOWER(d.NAME) LIKE LOWER(?) " +
+//                "GROUP BY f.film_id";
+//        filmRows = jdbcTemplate.queryForRowSet(sql, querySyntax, querySyntax);
+//        while (filmRows.next()) {
+//            int id = filmRows.getInt("film_id");
+//            films.add(jdbcTemplate.query(SELECT_FILMS + "WHERE f.film_id = ?", (rs, rowNum) -> makeFilm(rs), id).stream().findFirst());
+//        }
+//
+//        return films;
+        //List<Film> films = jdbcTemplate.query(sql, (rs, rowNum) -> makeFilm(rs), query, query);
 
-        return jdbcTemplate.query(sql, new Object[]{regex, regex}, (rs, rowNum) -> makeFilm(rs));
+        //List<Film> films = jdbcTemplate.query(sql, new Object[]{regex, regex}, (rs, rowNum) -> makeFilm(rs));
+        //return films;
+
+        String querySyntax = "%" + query + "%";
+        List<Film> films = new ArrayList<>();
+        String sql = "SELECT f.film_id " +
+                "FROM films AS f " +
+                "LEFT JOIN FILM_DIRECTORS AS fd ON f.film_id=fd.FILM_ID " +
+                "LEFT JOIN DIRECTORS AS d ON fd.DIRECTOR_ID=d.DIRECTOR_ID " +
+                "WHERE LOWER(f.name) LIKE LOWER(?) " +
+                "OR LOWER(d.NAME) LIKE LOWER(?) " +
+                "GROUP BY f.film_id";
+        SqlRowSet filmRows = jdbcTemplate.queryForRowSet(sql, querySyntax, querySyntax);
+        while (filmRows.next()) {
+            int id = filmRows.getInt("film_id");
+            Film film = jdbcTemplate.query(SELECT_FILMS + "WHERE f.film_id = ?", (rs, rowNum) -> makeFilm(rs), id)
+                    .stream()
+                    .findFirst()
+                    .orElse(null);
+            if (film != null) {
+                films.add(film);
+            }
+        }
+        addDirectorsInFilms(films);
+        return films;
+
     }
 
     @Override
@@ -211,23 +285,133 @@ public class FilmDbStorage implements FilmStorage {
         String sql = SELECT_FILMS +
                 "WHERE UPPER(f.name) LIKE UPPER(?) " +
                 "GROUP BY F.FILM_ID ";
-
-        return jdbcTemplate.query(sql, new Object[]{regex}, (rs, rowNum) -> makeFilm(rs));
+        List<Film> films = jdbcTemplate.query(sql, new Object[]{regex}, (rs, rowNum) -> makeFilm(rs));
+        for (Film film : films) {
+            if(film.getGenres() == null){
+                film.setGenres(new LinkedHashSet<>());
+            }
+        }
+        return films;
     }
 
     @Override
     public List<Film> searchFilmsByDir(String query) {
-        String regex = "%" + query + "%";
-        String sql = SELECT_FILMS +
-                "WHERE F.FILM_ID IN (" +
-                "SELECT FD.FILM_ID " +
-                "FROM FILM_DIRECTORS FD " +
-                "LEFT JOIN DIRECTORS D ON D.DIRECTOR_ID = FD.DIRECTOR_ID " +
-                "WHERE UPPER(D.NAME) LIKE UPPER(?)" +
-                ") " +
-                "GROUP BY F.FILM_ID ";
+        log.info(query);
+        String sql = "SELECT DIRECTOR_ID FROM DIRECTORS WHERE LOWER(NAME) LIKE LOWER(?)";
+        List<Integer> directorId = jdbcTemplate.query(sql, (rs, rowNum) -> rs.getInt("DIRECTOR_ID"), "%" + query + "%");
+        String sql4 = "SELECT NAME FROM DIRECTORS WHERE DIRECTOR_ID = ?";
+        List<String> directorsN = jdbcTemplate.query(sql4, (rs, rowNum) -> rs.getString("NAME"), directorId.getFirst());
+        log.info("DIRECTORS: {}", directorsN);
+        log.info("directorId: {}", directorId);
 
-        return jdbcTemplate.query(sql, new Object[]{regex}, (rs, rowNum) -> makeFilm(rs));
+
+
+
+
+        String findF = "SELECT FILM_ID FROM FILM_DIRECTORS";
+        List<Integer> test = jdbcTemplate.query(findF, (rs, rowNum) -> rs.getInt("FILM_ID"));
+        log.info("test: {}", test);
+        String findD = "SELECT DIRECTOR_ID FROM FILM_DIRECTORS";
+        List<Integer> test2 = jdbcTemplate.query(findD, (rs, rowNum) -> rs.getInt("DIRECTOR_ID"));
+        log.info("test: {}", test2);
+
+
+        String dNames = "SELECT NAME FROM DIRECTORS WHERE DIRECTOR_ID IN (" + test2.stream().map(Object::toString).collect(Collectors.joining(", ")) + ")";
+        List<String> directorNames = jdbcTemplate.query(dNames, (rs, rowNum) -> rs.getString("NAME"));
+        log.info("DIRECTORS NAME {}", directorNames);
+
+
+        String sql1 = SELECT_FILMS +
+                "LEFT JOIN FILM_DIRECTORS fd ON fd.film_id = f.film_id " +
+                "WHERE fd.director_id = ?" +
+                "GROUP BY F.FILM_ID ";
+        List<Film> films = jdbcTemplate.query(sql1, (rs, rowNum) -> makeFilm(rs), directorId.getFirst());
+        addDirectorsInFilms(films);
+
+        log.info("FILM LIST: {}", films);
+        return films;
+//
+//        // Step 1: Find the director IDs based on the query
+//        String sql = "SELECT DIRECTOR_ID FROM DIRECTORS WHERE LOWER(NAME) LIKE LOWER(?)";
+//        List<Integer> directorIds = jdbcTemplate.query(sql, (rs, rowNum) -> rs.getInt("DIRECTOR_ID"), "%" + query + "%");
+//        log.info("directorIds: {}", directorIds);
+//        if (directorIds.isEmpty()) {
+//            return Collections.emptyList(); // No directors found, return an empty list
+//        }
+//
+//        // Step 2: Construct the SQL query for films with the director IDs
+//        StringBuilder sqlBuilder = new StringBuilder(SELECT_FILMS);
+//        sqlBuilder.append("LEFT JOIN FILM_DIRECTORS fd ON fd.film_id = f.film_id ");
+//        sqlBuilder.append("WHERE fd.director_id IN (");
+//        StringJoiner joiner = new StringJoiner(",");
+//        for (int i = 0; i < directorIds.size(); i++) {
+//            joiner.add("?");
+//        }
+//        sqlBuilder.append(joiner.toString());
+//        sqlBuilder.append(") GROUP BY f.film_id");
+//
+//        String sql1 = sqlBuilder.toString();
+//        log.info(sql1);
+//
+//        String sqlTest = "WHERE d.director_id = ?";
+//        Optional<Director> d = jdbcTemplate.query(SELECT_DIRECTORS + sqlTest, (rs, rowNum) -> makeDirector(rs), directorIds.getFirst()).stream().findFirst();
+//        log.info("DIRECTOR {}", d);
+//
+//        // Step 3: Query the films using the constructed SQL and director IDs
+//        List<Film> films = jdbcTemplate.query(sql1, (rs, rowNum) -> makeFilm(rs), directorIds.toArray());
+//
+//        // Step 4: Add directors to the films
+//        addDirectorsInFilms(films);
+//
+//        return films;
+//        String findIdByName = "SELECT DIRECTOR_ID FROM DIRECTORS d WHERE UPPER(d.name) LIKE UPPER(?)";
+//        long dId = 0;
+//        try {
+//            dId = jdbcTemplate.queryForObject(findIdByName, new Object[]{query}, Long.class);;
+//        } catch (NullPointerException e) {
+//            // Обработка случая, когда результат не найден
+//                       System.out.println("Директор с именем " + query + " не найден.");
+//        }
+//        String regex = "%" + query + "%";
+//        String sql = SELECT_FILMS +
+//                "WHERE F.FILM_ID IN (" +
+//                "SELECT FD.FILM_ID " +
+//                "FROM FILM_DIRECTORS FD " +
+//                "LEFT JOIN DIRECTORS D ON D.DIRECTOR_ID = FD.DIRECTOR_ID " +
+//                "WHERE UPPER(D.NAME) LIKE UPPER(?)" +
+//                ") " +
+//                "GROUP BY F.FILM_ID ";
+//        String sql = SELECT_FILMS +
+//                "LEFT JOIN FILM_DIRECTORS fd ON fd.film_id = f.film_id " +
+//                "WHERE fd.director_id = ? ";
+//        List<Film> films = jdbcTemplate.query(sql, (rs, rowNum) -> makeFilm(rs), dId);
+//        addDirectorsInFilms(films);
+//        return films;
+//        List<Film> films = jdbcTemplate.query(sql, new Object[]{regex}, (rs, rowNum) -> makeFilm(rs));
+//        return films;
+//
+//        String querySyntax = "%" + query + "%";
+//        List<Film> films = new ArrayList<>();
+//        String sql = "SELECT f.film_id " +
+//                "FROM films AS f " +
+//                "LEFT JOIN FILM_DIRECTORS AS fd ON f.film_id=fd.FILM_ID " +
+//                "LEFT JOIN DIRECTORS AS d ON fd.DIRECTOR_ID=d.DIRECTOR_ID " +
+//                "LOWER(d.NAME) LIKE LOWER(?) " +
+//                "GROUP BY f.film_id";
+//        SqlRowSet filmRows = jdbcTemplate.queryForRowSet(sql, querySyntax, querySyntax);
+//        while (filmRows.next()) {
+//            int id = filmRows.getInt("film_id");
+//            Film film = jdbcTemplate.query(SELECT_FILMS + "WHERE f.film_id = ?", (rs, rowNum) -> makeFilm(rs), id)
+//                    .stream()
+//                    .findFirst()
+//                    .orElse(null);
+//            if (film != null) {
+//                films.add(film);
+//            }
+//        }
+//        addDirectorsInFilms(films);
+//        return films;
+
     }
 
     private Film makeFilm(ResultSet rs) throws SQLException {
@@ -338,5 +522,13 @@ public class FilmDbStorage implements FilmStorage {
             }
             return userIdToFilmIds;
         }
+    }
+
+    private Director makeDirector(ResultSet rs) throws SQLException {
+        int id = rs.getInt("director_id");
+        return Director.builder()
+                .id(id)
+                .name(rs.getString("name"))
+                .build();
     }
 }
