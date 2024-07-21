@@ -273,6 +273,11 @@ public class FilmDbStorage implements FilmStorage {
                 films.add(film);
             }
         }
+        for (Film film : films) {
+            if (film.getGenres() == null) {
+                film.setGenres(new LinkedHashSet<>());
+            }
+        }
         addDirectorsInFilms(films);
         return films;
 
