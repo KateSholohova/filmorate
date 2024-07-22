@@ -1,110 +1,99 @@
 package ru.yandex.practicum.filmorate.service;
 
-
 import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
+import ru.yandex.practicum.filmorate.model.FeedEntry;
+import ru.yandex.practicum.filmorate.model.FeedEventType;
+import ru.yandex.practicum.filmorate.model.FeedOperationType;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.UserDbStorage;
-import ru.yandex.practicum.filmorate.storage.mappers.UserRowMapper;
+import ru.yandex.practicum.filmorate.storage.FriendStorage;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
-@Service
 @RequiredArgsConstructor
+@Service
 public class UserService {
-    private final UserDbStorage userRepository;
-    private final JdbcTemplate jdbc;
-    private final UserRowMapper mapper;
+    private final UserStorage userStorage;
+    private final FriendStorage friendStorage;
+    private final FeedService feedService;
 
-    public User addFriend(long id, long friendId) {
-
-        if (userRepository.findById(id) == null) {
-            throw new NotFoundException("Нет пользователя с id: " + id);
-        }
-        if (userRepository.findById(friendId) == null) {
-            throw new NotFoundException("Нет пользователя с id: " + friendId);
-        }
-        jdbc.update("INSERT INTO friendship_request(from_user_id, to_user_id, status) " +
-                "VALUES(?, ?, ?)", id, friendId, 1);
-        jdbc.update("INSERT INTO friendship_request(from_user_id, to_user_id, status) " +
-                "VALUES(?, ?, ?)", friendId, id, 0);
-
-
-        return userRepository.findById(id);
-    }
-
-    public User deleteUser(long id, long friendId) {
-        if (userRepository.findById(id) == null) {
-            throw new NotFoundException("Нет пользователя с id: " + id);
-        }
-        if (userRepository.findById(friendId) == null) {
-            throw new NotFoundException("Нет пользователя с id: " + friendId);
-        }
-        jdbc.update("DELETE FROM friendship_request WHERE from_user_id = ? AND to_user_id = ? AND " +
-                "status = ?", id, friendId, 1);
-        jdbc.update("DELETE FROM friendship_request WHERE from_user_id = ? AND to_user_id = ? AND " +
-                "status = ?", friendId, id, 0);
-
-
-        return userRepository.findById(id);
-    }
-
-
-    public List<User> commonFriends(long id, long otherId) {
-        if (userRepository.findById(id) == null) {
-            throw new NotFoundException("Нет пользователя с id: " + id);
-        }
-        if (userRepository.findById(otherId) == null) {
-            throw new NotFoundException("Нет пользователя с id: " + otherId);
-        }
-
-        String sql = "SELECT to_user_id FROM friendship_request WHERE from_user_id = ?" +
-                " INTERSECT " +
-                "SELECT to_user_id FROM friendship_request WHERE from_user_id = ?";
-
-        List<Long> commonFriendIds = jdbc.queryForList(sql, Long.class, id, otherId);
-
-        // Получить список пользователей по их ID
-        List<User> commonFriends = new ArrayList<>();
-        for (Long friendId : commonFriendIds) {
-            User user = userRepository.findById(friendId);
-            if (user != null) {
-                commonFriends.add(user);
-            }
-        }
-
-        return commonFriends;
-    }
-
-    public List<User> allFriends(long userId) {
-        if (userRepository.findById(userId) == null) {
-            throw new NotFoundException("Нет пользователя с id: " + userId);
-        }
-        String sql = "SELECT U.* FROM friendship_request AS F JOIN USERS AS U ON F.to_user_id = U.id WHERE F.from_user_id = ? AND F.status = true";
-        List<User> usersList = jdbc.query(sql, mapper, userId);
-
-        return usersList;
-    }
-
-    public Collection<User> findAll() {
-        return userRepository.findAll();
-    }
-
-    public void delete(long id) {
-        userRepository.delete(id);
-    }
-
-    public User update(User newUser) {
-        return userRepository.update(newUser);
+    public List<User> findAll() {
+        return userStorage.findAll();
     }
 
     public User create(User user) {
-        return userRepository.create(user);
+        validate(user);
+        return userStorage.create(user);
     }
 
+    public User update(User user) {
+        validate(user);
+        if (userStorage.findUserById(user.getId()).isEmpty()) {
+            throw new UserNotFoundException("Пользователь не найден.");
+        }
+        return userStorage.update(user);
+    }
 
+    public User findUserById(int id) {
+        return userStorage.findUserById(id).orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
+    }
+
+    public void addFriend(int id, int friendId) {
+        if (userStorage.findUserById(id).isEmpty() || userStorage.findUserById(friendId).isEmpty()) {
+            throw new UserNotFoundException("Пользователь не найден.");
+        }
+        if (id < 0 || friendId < 0) {
+            throw new UserNotFoundException("Пользователь не найден.");
+        }
+        friendStorage.addFriend(id, friendId);
+
+        FeedEntry feedEntry = FeedEntry.builder()
+                .userId(id)
+                .eventType(FeedEventType.FRIEND)
+                .operation(FeedOperationType.ADD)
+                .entityId(friendId)
+                .build();
+
+        feedService.create(feedEntry);
+    }
+
+    public List<User> findAllFriends(int id) {
+        if (userStorage.findUserById(id).isEmpty()) {
+            throw new UserNotFoundException("Пользователь не найден.");
+        }
+        return friendStorage.findAllFriends(id);
+    }
+
+    public List<User> findCommonFriends(int id, int otherId) {
+        return friendStorage.findCommonFriends(id, otherId);
+    }
+
+    public void removeFriend(int id, int friendId) {
+        if (userStorage.findUserById(id).isEmpty() || userStorage.findUserById(friendId).isEmpty()) {
+            throw new UserNotFoundException("Пользователь не найден.");
+        }
+        friendStorage.removeFriend(id, friendId);
+
+        FeedEntry feedEntry = FeedEntry.builder()
+                .userId(id)
+                .eventType(FeedEventType.FRIEND)
+                .operation(FeedOperationType.REMOVE)
+                .entityId(friendId)
+                .build();
+
+        feedService.create(feedEntry);
+    }
+
+    private void validate(User user) {
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+        }
+    }
+
+    public void deleteUserById(int id) {
+        userStorage.findUserById(id).orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
+        userStorage.deleteUserById(id);
+    }
 }
