@@ -226,6 +226,7 @@ public class FilmDbStorage implements FilmStorage {
             film.setGenres(genreLinkedHashSet);
         }
         addDirectorsInFilms(films);
+        log.info("FILMS " + films);
         return films;
     }
 
