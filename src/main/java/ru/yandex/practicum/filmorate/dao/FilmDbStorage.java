@@ -8,7 +8,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -200,7 +199,7 @@ public class FilmDbStorage implements FilmStorage {
             LinkedHashSet<Genre> genreLinkedHashSet = new LinkedHashSet<>();
             String filmGenres = "SELECT G.* FROM film_genres AS F JOIN genres AS G ON F.genre_id = G.genre_id WHERE F.film_id = ? GROUP BY G.genre_id";
             List<Genre> genres = jdbcTemplate.query(filmGenres, (rs, rowNum) -> makeGenre(rs), film.getId());
-            for(Genre genre : genres) {
+            for (Genre genre : genres) {
                 genreLinkedHashSet.add(genre);
             }
             film.setGenres(genreLinkedHashSet);
@@ -221,7 +220,7 @@ public class FilmDbStorage implements FilmStorage {
             LinkedHashSet<Genre> genreLinkedHashSet = new LinkedHashSet<>();
             String filmGenres = "SELECT G.* FROM film_genres AS F JOIN genres AS G ON F.genre_id = G.genre_id WHERE F.film_id = ? GROUP BY G.genre_id";
             List<Genre> genres = jdbcTemplate.query(filmGenres, (rs, rowNum) -> makeGenre(rs), film.getId());
-            for(Genre genre : genres) {
+            for (Genre genre : genres) {
                 genreLinkedHashSet.add(genre);
             }
             film.setGenres(genreLinkedHashSet);
@@ -246,7 +245,7 @@ public class FilmDbStorage implements FilmStorage {
             LinkedHashSet<Genre> genreLinkedHashSet = new LinkedHashSet<>();
             String filmGenres = "SELECT G.* FROM film_genres AS F JOIN genres AS G ON F.genre_id = G.genre_id WHERE F.film_id = ? GROUP BY G.genre_id";
             List<Genre> genres = jdbcTemplate.query(filmGenres, (rs, rowNum) -> makeGenre(rs), film.getId());
-            for(Genre genre : genres) {
+            for (Genre genre : genres) {
                 genreLinkedHashSet.add(genre);
             }
             film.setGenres(genreLinkedHashSet);
